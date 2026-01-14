@@ -190,8 +190,8 @@ model = dict(
                       weight=5),
             pc_range=point_cloud_range))))
 
-dataset_type = 'CustomNuScenesLocalMapDataset'
-data_root = 'data/nuscenes/'
+dataset_type = 'CustomNuScenesDataset'
+data_root = 'data/nuscenes_scenes003/'
 file_client_args = dict(backend='disk')
 
 
@@ -240,37 +240,38 @@ data = dict(
         modality=input_modality,
         test_mode=False,
         use_valid_flag=True,
-        bev_size=(bev_h_, bev_w_),
-        pc_range=point_cloud_range,
-        fixed_ptsnum_per_line=fixed_ptsnum_per_gt_line,
-        eval_use_same_gt_sample_num_flag=eval_use_same_gt_sample_num_flag,
-        padding_value=-10000,
-        map_classes=map_classes,
-        queue_length=queue_length,
+        bev_size=(bev_h_, bev_w_),  # CustomNuScenesDataset accepts this
+        # pc_range=point_cloud_range,  # Not accepted by CustomNuScenesDataset
+        # For CustomNuScenesLocalMapDataset, uncomment these:
+        # fixed_ptsnum_per_line=fixed_ptsnum_per_gt_line,
+        # eval_use_same_gt_sample_num_flag=eval_use_same_gt_sample_num_flag,
+        # padding_value=-10000,
+        # map_classes=map_classes,
+        queue_length=queue_length,  # CustomNuScenesDataset accepts this
         # we use box_type_3d='LiDAR' in kitti and nuscenes dataset
         # and box_type_3d='Depth' in sunrgbd and scannet dataset.
         box_type_3d='LiDAR'),
     val=dict(type=dataset_type,
              data_root=data_root,
              ann_file=data_root + 'nuscenes_infos_temporal_val.pkl',
-             map_ann_file=data_root + 'nuscenes_map_anns_val.json',
-             pipeline=test_pipeline,  bev_size=(bev_h_, bev_w_),
-             pc_range=point_cloud_range,
-             fixed_ptsnum_per_line=fixed_ptsnum_per_gt_line,
-             eval_use_same_gt_sample_num_flag=eval_use_same_gt_sample_num_flag,
-             padding_value=-10000,
-             map_classes=map_classes,
+             pipeline=test_pipeline,
+             bev_size=(bev_h_, bev_w_),  # CustomNuScenesDataset accepts this
+             # pc_range=point_cloud_range,  # Not accepted by CustomNuScenesDataset
+             # fixed_ptsnum_per_line=fixed_ptsnum_per_gt_line,  # Not needed for CustomNuScenesDataset
+             # eval_use_same_gt_sample_num_flag=eval_use_same_gt_sample_num_flag,  # Not needed for CustomNuScenesDataset
+             # padding_value=-10000,  # Not needed for CustomNuScenesDataset
+             # map_classes=map_classes,  # Not needed for CustomNuScenesDataset
              classes=class_names, modality=input_modality, samples_per_gpu=1),
     test=dict(type=dataset_type,
               data_root=data_root,
               ann_file=data_root + 'nuscenes_infos_temporal_val.pkl',
-              map_ann_file=data_root + 'nuscenes_map_anns_val.json',
-              pipeline=test_pipeline, bev_size=(bev_h_, bev_w_),
-              pc_range=point_cloud_range,
-              fixed_ptsnum_per_line=fixed_ptsnum_per_gt_line,
-              eval_use_same_gt_sample_num_flag=eval_use_same_gt_sample_num_flag,
-              padding_value=-10000,
-              map_classes=map_classes,
+              pipeline=test_pipeline,
+              bev_size=(bev_h_, bev_w_),  # CustomNuScenesDataset accepts this
+              # pc_range=point_cloud_range,  # Not accepted by CustomNuScenesDataset
+              # fixed_ptsnum_per_line=fixed_ptsnum_per_gt_line,  # Not needed for CustomNuScenesDataset
+              # eval_use_same_gt_sample_num_flag=eval_use_same_gt_sample_num_flag,  # Not needed for CustomNuScenesDataset
+              # padding_value=-10000,  # Not needed for CustomNuScenesDataset
+              # map_classes=map_classes,  # Not needed for CustomNuScenesDataset
               classes=class_names, modality=input_modality),
     shuffler_sampler=dict(type='DistributedGroupSampler'),
     nonshuffler_sampler=dict(type='DistributedSampler')

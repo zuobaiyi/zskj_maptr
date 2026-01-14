@@ -1,6 +1,11 @@
 /*.sh
 change_submit.py
 cluster_submit.yaml
+*jpg
+*mp4
+*pth
+*pkl
+*txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

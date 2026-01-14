@@ -1,9 +1,17 @@
 import argparse
 import mmcv
 import os
+import sys
 import shutil
 import torch
 import warnings
+
+# Add project root to sys.path to enable imports from 'projects'
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '../..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from mmcv import Config, DictAction
 from mmcv.cnn import fuse_conv_bn
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
@@ -83,6 +91,15 @@ def parse_args():
         default=['fixed_num_pts',],
         help='vis format, default should be "points",'
         'support ["se_pts","bbox","fixed_num_pts","polyline_pts"]')
+    gt_mode_group = parser.add_mutually_exclusive_group(required=True)
+    gt_mode_group.add_argument(
+        '--no-gt',
+        action='store_true',
+        help='No GT mode: Skip GT visualization, only run inference (for datasets without GT)')
+    gt_mode_group.add_argument(
+        '--with-gt',
+        action='store_true',
+        help='With GT mode: Enable GT visualization (for datasets with GT)')
     args = parser.parse_args()
     return args
 
@@ -212,19 +229,32 @@ def main():
     have_mask = False
     # prog_bar = mmcv.ProgressBar(len(CANDIDATE))
     prog_bar = mmcv.ProgressBar(len(dataset))
+    
+    # Two modes only: --no-gt or --with-gt (user must specify one)
+    if args.no_gt:
+        has_gt_mode = False
+        logger.info('Mode: --no-gt specified, skipping GT visualization (inference only)')
+    else:  # args.with_gt
+        has_gt_mode = True
+        logger.info('Mode: --with-gt specified, enabling GT visualization')
+    
+    data_iter = iter(data_loader)
+    
     # import pdb;pdb.set_trace()
-    for i, data in enumerate(data_loader):
-        if ~(data['gt_labels_3d'].data[0][0] != -1).any():
-            # import pdb;pdb.set_trace()
-            logger.error(f'\n empty gt for index {i}, continue')
-            # prog_bar.update()  
-            continue
-       
+    for i, data in enumerate(data_iter):
+        if has_gt_mode:
+            # Original logic: check GT validity, continue if empty
+            if ~(data['gt_labels_3d'].data[0][0] != -1).any():
+                # import pdb;pdb.set_trace()
+                logger.error(f'\n empty gt for index {i}, continue')
+                # prog_bar.update()  
+                continue
+            gt_bboxes_3d = data['gt_bboxes_3d'].data[0]
+            gt_labels_3d = data['gt_labels_3d'].data[0]
         
+        # Model inference - this does NOT require GT, only needs 'img' and 'img_metas'
         img = data['img'][0].data[0]
         img_metas = data['img_metas'][0].data[0]
-        gt_bboxes_3d = data['gt_bboxes_3d'].data[0]
-        gt_labels_3d = data['gt_labels_3d'].data[0]
 
         pts_filename = img_metas[0]['pts_filename']
         pts_filename = osp.basename(pts_filename)
@@ -270,75 +300,77 @@ def main():
         cams_img_path = osp.join(sample_dir,'surroud_view.jpg')
         cv2.imwrite(cams_img_path, cams_img,[cv2.IMWRITE_JPEG_QUALITY, 70])
         
-        for vis_format in args.gt_format:
-            if vis_format == 'se_pts':
-                gt_line_points = gt_bboxes_3d[0].start_end_points
-                for gt_bbox_3d, gt_label_3d in zip(gt_line_points, gt_labels_3d[0]):
-                    pts = gt_bbox_3d.reshape(-1,2).numpy()
-                    x = np.array([pt[0] for pt in pts])
-                    y = np.array([pt[1] for pt in pts])
-                    plt.quiver(x[:-1], y[:-1], x[1:] - x[:-1], y[1:] - y[:-1], scale_units='xy', angles='xy', scale=1, color=colors_plt[gt_label_3d])
-            elif vis_format == 'bbox':
-                gt_lines_bbox = gt_bboxes_3d[0].bbox
-                for gt_bbox_3d, gt_label_3d in zip(gt_lines_bbox, gt_labels_3d[0]):
-                    gt_bbox_3d = gt_bbox_3d.numpy()
-                    xy = (gt_bbox_3d[0],gt_bbox_3d[1])
-                    width = gt_bbox_3d[2] - gt_bbox_3d[0]
-                    height = gt_bbox_3d[3] - gt_bbox_3d[1]
+        # GT visualization - only in GT mode (does not affect inference)
+        if has_gt_mode:
+            for vis_format in args.gt_format:
+                if vis_format == 'se_pts':
+                    gt_line_points = gt_bboxes_3d[0].start_end_points
+                    for gt_bbox_3d, gt_label_3d in zip(gt_line_points, gt_labels_3d[0]):
+                        pts = gt_bbox_3d.reshape(-1,2).numpy()
+                        x = np.array([pt[0] for pt in pts])
+                        y = np.array([pt[1] for pt in pts])
+                        plt.quiver(x[:-1], y[:-1], x[1:] - x[:-1], y[1:] - y[:-1], scale_units='xy', angles='xy', scale=1, color=colors_plt[gt_label_3d])
+                elif vis_format == 'bbox':
+                    gt_lines_bbox = gt_bboxes_3d[0].bbox
+                    for gt_bbox_3d, gt_label_3d in zip(gt_lines_bbox, gt_labels_3d[0]):
+                        gt_bbox_3d = gt_bbox_3d.numpy()
+                        xy = (gt_bbox_3d[0],gt_bbox_3d[1])
+                        width = gt_bbox_3d[2] - gt_bbox_3d[0]
+                        height = gt_bbox_3d[3] - gt_bbox_3d[1]
+                        # import pdb;pdb.set_trace()
+                        plt.gca().add_patch(Rectangle(xy,width,height,linewidth=0.4,edgecolor=colors_plt[gt_label_3d],facecolor='none'))
+                        # plt.Rectangle(xy, width, height,color=colors_plt[gt_label_3d])
+                    # continue
+                elif vis_format == 'fixed_num_pts':
+                    plt.figure(figsize=(2, 4))
+                    plt.xlim(pc_range[0], pc_range[3])
+                    plt.ylim(pc_range[1], pc_range[4])
+                    plt.axis('off')
+                    # gt_bboxes_3d[0].fixed_num=30 #TODO, this is a hack
+                    gt_lines_fixed_num_pts = gt_bboxes_3d[0].fixed_num_sampled_points
+                    for gt_bbox_3d, gt_label_3d in zip(gt_lines_fixed_num_pts, gt_labels_3d[0]):
+                        # import pdb;pdb.set_trace() 
+                        pts = gt_bbox_3d.numpy()
+                        x = np.array([pt[0] for pt in pts])
+                        y = np.array([pt[1] for pt in pts])
+                        # plt.quiver(x[:-1], y[:-1], x[1:] - x[:-1], y[1:] - y[:-1], scale_units='xy', angles='xy', scale=1, color=colors_plt[gt_label_3d])
+
+                        
+                        plt.plot(x, y, color=colors_plt[gt_label_3d],linewidth=1,alpha=0.8,zorder=-1)
+                        plt.scatter(x, y, color=colors_plt[gt_label_3d],s=2,alpha=0.8,zorder=-1)
+                        # plt.plot(x, y, color=colors_plt[gt_label_3d])
+                        # plt.scatter(x, y, color=colors_plt[gt_label_3d],s=1)
+                    plt.imshow(car_img, extent=[-1.2, 1.2, -1.5, 1.5])
+
+                    gt_fixedpts_map_path = osp.join(sample_dir, 'GT_fixednum_pts_MAP.png')
+                    plt.savefig(gt_fixedpts_map_path, bbox_inches='tight', format='png',dpi=1200)
+                    plt.close()   
+                elif vis_format == 'polyline_pts':
+                    plt.figure(figsize=(2, 4))
+                    plt.xlim(pc_range[0], pc_range[3])
+                    plt.ylim(pc_range[1], pc_range[4])
+                    plt.axis('off')
+                    gt_lines_instance = gt_bboxes_3d[0].instance_list
                     # import pdb;pdb.set_trace()
-                    plt.gca().add_patch(Rectangle(xy,width,height,linewidth=0.4,edgecolor=colors_plt[gt_label_3d],facecolor='none'))
-                    # plt.Rectangle(xy, width, height,color=colors_plt[gt_label_3d])
-                # continue
-            elif vis_format == 'fixed_num_pts':
-                plt.figure(figsize=(2, 4))
-                plt.xlim(pc_range[0], pc_range[3])
-                plt.ylim(pc_range[1], pc_range[4])
-                plt.axis('off')
-                # gt_bboxes_3d[0].fixed_num=30 #TODO, this is a hack
-                gt_lines_fixed_num_pts = gt_bboxes_3d[0].fixed_num_sampled_points
-                for gt_bbox_3d, gt_label_3d in zip(gt_lines_fixed_num_pts, gt_labels_3d[0]):
-                    # import pdb;pdb.set_trace() 
-                    pts = gt_bbox_3d.numpy()
-                    x = np.array([pt[0] for pt in pts])
-                    y = np.array([pt[1] for pt in pts])
-                    # plt.quiver(x[:-1], y[:-1], x[1:] - x[:-1], y[1:] - y[:-1], scale_units='xy', angles='xy', scale=1, color=colors_plt[gt_label_3d])
+                    for gt_line_instance, gt_label_3d in zip(gt_lines_instance, gt_labels_3d[0]):
+                        pts = np.array(list(gt_line_instance.coords))
+                        x = np.array([pt[0] for pt in pts])
+                        y = np.array([pt[1] for pt in pts])
+                        
+                        # plt.quiver(x[:-1], y[:-1], x[1:] - x[:-1], y[1:] - y[:-1], scale_units='xy', angles='xy', scale=1, color=colors_plt[gt_label_3d])
 
-                    
-                    plt.plot(x, y, color=colors_plt[gt_label_3d],linewidth=1,alpha=0.8,zorder=-1)
-                    plt.scatter(x, y, color=colors_plt[gt_label_3d],s=2,alpha=0.8,zorder=-1)
-                    # plt.plot(x, y, color=colors_plt[gt_label_3d])
-                    # plt.scatter(x, y, color=colors_plt[gt_label_3d],s=1)
-                plt.imshow(car_img, extent=[-1.2, 1.2, -1.5, 1.5])
+                        # plt.plot(x, y, color=colors_plt[gt_label_3d])
+                        plt.plot(x, y, color=colors_plt[gt_label_3d],linewidth=1,alpha=0.8,zorder=-1)
+                        plt.scatter(x, y, color=colors_plt[gt_label_3d],s=1,alpha=0.8,zorder=-1)
+                    plt.imshow(car_img, extent=[-1.2, 1.2, -1.5, 1.5])
 
-                gt_fixedpts_map_path = osp.join(sample_dir, 'GT_fixednum_pts_MAP.png')
-                plt.savefig(gt_fixedpts_map_path, bbox_inches='tight', format='png',dpi=1200)
-                plt.close()   
-            elif vis_format == 'polyline_pts':
-                plt.figure(figsize=(2, 4))
-                plt.xlim(pc_range[0], pc_range[3])
-                plt.ylim(pc_range[1], pc_range[4])
-                plt.axis('off')
-                gt_lines_instance = gt_bboxes_3d[0].instance_list
-                # import pdb;pdb.set_trace()
-                for gt_line_instance, gt_label_3d in zip(gt_lines_instance, gt_labels_3d[0]):
-                    pts = np.array(list(gt_line_instance.coords))
-                    x = np.array([pt[0] for pt in pts])
-                    y = np.array([pt[1] for pt in pts])
-                    
-                    # plt.quiver(x[:-1], y[:-1], x[1:] - x[:-1], y[1:] - y[:-1], scale_units='xy', angles='xy', scale=1, color=colors_plt[gt_label_3d])
+                    gt_polyline_map_path = osp.join(sample_dir, 'GT_polyline_pts_MAP.png')
+                    plt.savefig(gt_polyline_map_path, bbox_inches='tight', format='png',dpi=1200)
+                    plt.close()           
 
-                    # plt.plot(x, y, color=colors_plt[gt_label_3d])
-                    plt.plot(x, y, color=colors_plt[gt_label_3d],linewidth=1,alpha=0.8,zorder=-1)
-                    plt.scatter(x, y, color=colors_plt[gt_label_3d],s=1,alpha=0.8,zorder=-1)
-                plt.imshow(car_img, extent=[-1.2, 1.2, -1.5, 1.5])
-
-                gt_polyline_map_path = osp.join(sample_dir, 'GT_polyline_pts_MAP.png')
-                plt.savefig(gt_polyline_map_path, bbox_inches='tight', format='png',dpi=1200)
-                plt.close()           
-
-            else: 
-                logger.error(f'WRONG visformat for GT: {vis_format}')
-                raise ValueError(f'WRONG visformat for GT: {vis_format}')
+                else: 
+                    logger.error(f'WRONG visformat for GT: {vis_format}')
+                    raise ValueError(f'WRONG visformat for GT: {vis_format}')
 
 
         # import pdb;pdb.set_trace()

@@ -190,8 +190,8 @@ model = dict(
                       weight=5),
             pc_range=point_cloud_range))))
 
-dataset_type = 'CustomNuScenesLocalMapDataset'
-data_root = 'data/nuscenes/'
+dataset_type = 'CustomNuScenesMapDataset'
+data_root = 'data/nuscenes_scenes003/'
 file_client_args = dict(backend='disk')
 
 

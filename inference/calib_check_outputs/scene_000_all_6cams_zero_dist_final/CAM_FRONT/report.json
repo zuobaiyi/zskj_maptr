@@ -1,0 +1,91 @@
+{
+  "cam": "CAM_FRONT",
+  "cam_dir": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/CAM_FRONT",
+  "cam_ego": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/cam_ego/cam_front_ego.yaml",
+  "extrinsic_txt": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/calib_ori/mid/mid-lidar-mid-camera.txt",
+  "lidar_yaml": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/calib_ori/lidarmid_to_base.yaml",
+  "lidar_name": "mid",
+  "pointcloud_dir": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/sensor__lidar__mid__PointCloud2/pointcloud2",
+  "projection_source": "cam_ego_chain_ego2lidar",
+  "delta_chain_vs_direct": {
+    "rot_angle_deg": 0.0,
+    "t_l2_norm_m": 1.0728651547655649e-07
+  },
+  "pairs": [
+    {
+      "ts_img": 1767597520369308112,
+      "ts_pc": 1767597520412606345,
+      "dt_ms": 43.298233,
+      "img": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/CAM_FRONT/1767597520369308112.jpg",
+      "pc_bin": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/sensor__lidar__mid__PointCloud2/pointcloud2/1767597520412606345.bin",
+      "out": "/home/zhihua/Downloads/codes/MapTR/inference_only/calib_check_outputs/scene_000_all_6cams_zero_dist_final/CAM_FRONT/img1767597520369308112_pc1767597520412606345_dt43.3ms_srccam_ego_chain_ego2lidar.jpg",
+      "stats": {
+        "n_points_loaded": 54516.0,
+        "n_points_depth_valid": 27258.0,
+        "n_points_in_image": 18213.0,
+        "img_w": 1920.0,
+        "img_h": 1080.0
+      }
+    },
+    {
+      "ts_img": 1767597535535368805,
+      "ts_pc": 1767597535532872034,
+      "dt_ms": 2.496771,
+      "img": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/CAM_FRONT/1767597535535368805.jpg",
+      "pc_bin": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/sensor__lidar__mid__PointCloud2/pointcloud2/1767597535532872034.bin",
+      "out": "/home/zhihua/Downloads/codes/MapTR/inference_only/calib_check_outputs/scene_000_all_6cams_zero_dist_final/CAM_FRONT/img1767597535535368805_pc1767597535532872034_dt2.5ms_srccam_ego_chain_ego2lidar.jpg",
+      "stats": {
+        "n_points_loaded": 49792.0,
+        "n_points_depth_valid": 49792.0,
+        "n_points_in_image": 28903.0,
+        "img_w": 1920.0,
+        "img_h": 1080.0
+      }
+    },
+    {
+      "ts_img": 1767597551364570347,
+      "ts_pc": 1767597551424850544,
+      "dt_ms": 60.280197,
+      "img": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/CAM_FRONT/1767597551364570347.jpg",
+      "pc_bin": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/sensor__lidar__mid__PointCloud2/pointcloud2/1767597551424850544.bin",
+      "out": "/home/zhihua/Downloads/codes/MapTR/inference_only/calib_check_outputs/scene_000_all_6cams_zero_dist_final/CAM_FRONT/img1767597551364570347_pc1767597551424850544_dt60.3ms_srccam_ego_chain_ego2lidar.jpg",
+      "stats": {
+        "n_points_loaded": 58081.0,
+        "n_points_depth_valid": 29041.0,
+        "n_points_in_image": 16713.0,
+        "img_w": 1920.0,
+        "img_h": 1080.0
+      }
+    },
+    {
+      "ts_img": 1767597567096656494,
+      "ts_pc": 1767597567006216903,
+      "dt_ms": 90.439591,
+      "img": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/CAM_FRONT/1767597567096656494.jpg",
+      "pc_bin": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/sensor__lidar__mid__PointCloud2/pointcloud2/1767597567006216903.bin",
+      "out": "/home/zhihua/Downloads/codes/MapTR/inference_only/calib_check_outputs/scene_000_all_6cams_zero_dist_final/CAM_FRONT/img1767597567096656494_pc1767597567006216903_dt90.4ms_srccam_ego_chain_ego2lidar.jpg",
+      "stats": {
+        "n_points_loaded": 57429.0,
+        "n_points_depth_valid": 28715.0,
+        "n_points_in_image": 18115.0,
+        "img_w": 1920.0,
+        "img_h": 1080.0
+      }
+    },
+    {
+      "ts_img": 1767597582897584716,
+      "ts_pc": 1767597582916963129,
+      "dt_ms": 19.378413,
+      "img": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/CAM_FRONT/1767597582897584716.jpg",
+      "pc_bin": "/home/zhihua/Downloads/codes/MapTR/inference_only/custom_data_template/scene_000/sensor__lidar__mid__PointCloud2/pointcloud2/1767597582916963129.bin",
+      "out": "/home/zhihua/Downloads/codes/MapTR/inference_only/calib_check_outputs/scene_000_all_6cams_zero_dist_final/CAM_FRONT/img1767597582897584716_pc1767597582916963129_dt19.4ms_srccam_ego_chain_ego2lidar.jpg",
+      "stats": {
+        "n_points_loaded": 53985.0,
+        "n_points_depth_valid": 26993.0,
+        "n_points_in_image": 17663.0,
+        "img_w": 1920.0,
+        "img_h": 1080.0
+      }
+    }
+  ]
+}
