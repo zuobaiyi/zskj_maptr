@@ -2,10 +2,7 @@
 import numba
 import numpy as np
 import warnings
-try:
-    from numba.errors import NumbaPerformanceWarning
-except ImportError:
-    from numba.core.errors import NumbaPerformanceWarning
+from numba.errors import NumbaPerformanceWarning
 
 from mmdet3d.core.bbox import box_np_ops
 
